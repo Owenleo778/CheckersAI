@@ -1,14 +1,14 @@
 import java.awt.Point;
 
 /**
- * A class that represents a piece (a man)
+ * A class that represents a piece
  * @author Owen Salvage
  */
 public class Piece {
 
     private Point position;
     private int colour;
-    protected Boolean king;
+    private Boolean king;
 
     public Piece(Point pos, int colour){
         if (pos != null){
@@ -24,18 +24,34 @@ public class Piece {
         king = false;
     }
 
+    /**
+     * Returns the current position of the piece.
+     * @return
+     */
     public Point getPosition(){
         return position;
     }
 
+    /**
+     * Sets the current position of the piece.
+     * @param pos the new position.
+     */
     public void setPosition(Point pos){
         position = pos;
     }
 
+    /**
+     * Returns the colour (-1 or 1) of the piece (White or Black respectively).
+     * @return it's colour.
+     */
     public int getColour(){
         return colour;
     }
 
+    /**
+     * Returns whether this piece is a king or not.
+     * @return if this piece is a king.
+     */
     public Boolean isKing(){
         return king;
     }
