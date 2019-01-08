@@ -51,7 +51,7 @@ public class Board  extends JPanel implements MouseListener {
         for (int x = 0; x < 8; x++){
             for (int y = 0; y < 3; y++){
                 if ((x + y) % 2 == 1){
-                    Piece p = new BlackPiece(new Point(x,y));
+                    Piece p = new Piece(new Point(x,y), BLACK);
                     board[x][y] = p;
                 }
             }
@@ -62,7 +62,7 @@ public class Board  extends JPanel implements MouseListener {
         for (int x = 0; x < 8; x++){
             for (int y = 5; y < 8; y++){
                 if ((x + y) % 2 == 1){
-                    Piece p = new WhitePiece(new Point(x,y));
+                    Piece p = new Piece(new Point(x,y), WHITE);
                     board[x][y] = p;
                 }
             }
@@ -100,11 +100,10 @@ public class Board  extends JPanel implements MouseListener {
             for (int y = 0; y < 8; y++){
                 Piece p = board[x][y];
                 if (p != null){
-                    if (p.getClass() == BlackPiece.class){
+                    if (p.getColour() == BLACK){
                         g.setColor(Color.BLACK);
                     } else {
-                        g.setColor(Color.WHITE);
-                    }
+                        g.setColor(Color.WHITE);                 }
                     drawChecker(g, p);
                     if (p.isKing()){
                         drawKingMarker(g,p);
@@ -161,7 +160,7 @@ public class Board  extends JPanel implements MouseListener {
                 int midx = (x - pos.x) / 2;
                 int midy = (y - pos.y ) / 2;
 
-                if (board[x - midx][y - midy] != null && board[x - midx][y - midy].getClass() != p.getClass()){
+                if (board[x - midx][y - midy] != null && board[x - midx][y - midy].getColour() != p.getColour()){
                     board[x - midx][y - midy] = null;
                     board[pos.x][pos.y] = null;
                     board[x][y] = p;
