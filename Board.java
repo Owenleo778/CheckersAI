@@ -9,8 +9,7 @@ import java.awt.event.MouseListener;
  * @author Owen Salvage
  */
 public class Board  extends JPanel implements MouseListener {
-
-
+     
     // Top LEFT CORNER = 0,0
     public final static int BLACK = 1;
     public final static int WHITE = -1;
@@ -38,6 +37,7 @@ public class Board  extends JPanel implements MouseListener {
         pieceToJump = null;
         justJumped = false;
         placePieces();
+        System.out.println("Black's turn.");
     }
 
     private void placePieces(){
@@ -81,7 +81,7 @@ public class Board  extends JPanel implements MouseListener {
     private void drawBoard(Graphics g){
         for (int x = 0; x < 8; x++){
             for (int y = 0; y < 8; y++){
-                if ((x +y ) % 2 == 1) {
+                if ((x + y) % 2 == 1) {
                     g.setColor(new Color(153, 76, 0));
                 } else {
                     g.setColor(Color.WHITE);
@@ -182,13 +182,17 @@ public class Board  extends JPanel implements MouseListener {
     private Boolean moveChecker(Piece p, int x, int y){
         if (inRange(x) && inRange(y) && isEmptySpace(x,y)){
             Point pos = p.getPosition();
-            if (Math.abs(x - pos.x) == 1 && p.correctDirection(y - pos.y) && !jumpAvailable()){
-                board[pos.x][pos.y] = null;
-                board[x][y] = p;
-                p.setPosition(new Point(x,y));
-                checkForKing(p);
-                justJumped = false;
-                return true;
+            if (Math.abs(x - pos.x) == 1 && p.correctDirection(y - pos.y)){
+                if (!jumpAvailable()) {
+                    board[pos.x][pos.y] = null;
+                    board[x][y] = p;
+                    p.setPosition(new Point(x, y));
+                    checkForKing(p);
+                    justJumped = false;
+                    return true;
+                } else {
+                    System.out.println("Invalid move, must take the jump.");
+                }
             } else if (Math.abs(x - pos.x) == 2 && p.correctDirection((y - pos.y) / 2)){
                 int midx = (x - pos.x) / 2;
                 int midy = (y - pos.y ) / 2;
@@ -280,7 +284,7 @@ public class Board  extends JPanel implements MouseListener {
     private Boolean checkWhiteJump(Piece p){
         Point pos = p.getPosition();
         return checkJump(p,pos.x - 1,pos.y + WHITE, pos.x - 2, pos.y + 2 * WHITE) ||
-                checkJump(p,pos.x + 1,pos.y - WHITE, pos.x + 2, pos.y + 2 * WHITE);
+                checkJump(p,pos.x + 1,pos.y + WHITE, pos.x + 2, pos.y + 2 * WHITE);
     }
     private Boolean checkWhiteMove(Piece p){
         Point pos = p.getPosition();
@@ -293,8 +297,13 @@ public class Board  extends JPanel implements MouseListener {
     private void nextPlayerTurn(){
         if (playerTurn == BLACK){
             playerTurn = WHITE;
+            System.out.println("White's turn.");
         } else {
             playerTurn = BLACK;
+            System.out.println("Black's turn.");
+        }
+        if (jumpAvailable()) {
+            System.out.println("There is a jump available.");
         }
         pieceToJump = null;
     }
@@ -345,6 +354,7 @@ public class Board  extends JPanel implements MouseListener {
             if (moveChecker(inHand,x,y)) {
                 if (justJumped && canPieceJump(board[x][y])) {
                     pieceToJump = board[x][y].getPosition();
+                    System.out.println("Jump again.");
                 } else {
                     nextPlayerTurn();
                 }
