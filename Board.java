@@ -31,6 +31,19 @@ public class Board  extends JPanel implements MouseListener {
         newGame();
     }
 
+    /**
+     * Copies the state of the board sent in.
+     * @param b
+     */
+    public Board(Board b){
+        super();
+        board = b.board;
+        inHand = b.inHand;
+        playerTurn = b.playerTurn;
+        pieceToJump = b.pieceToJump;
+        justJumped = b.justJumped;
+    }
+
     public void newGame(){
         inHand = null;
         playerTurn = BLACK;
