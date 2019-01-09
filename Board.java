@@ -3,6 +3,7 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.ArrayList;
 
 /**
  * A class that represents the board in checkers
@@ -13,12 +14,14 @@ public class Board  extends JPanel implements MouseListener {
     // Top LEFT CORNER = 0,0
     public final static int BLACK = 1;
     public final static int WHITE = -1;
+    public final static int AIPLAYER = BLACK;
     public Piece[][] board;
     private Window window;
     private Piece inHand;
     private int playerTurn;
     private Point pieceToJump;
-    private Boolean justJumped;
+    private boolean justJumped;
+    private CheckerMinMax  ai = null;
 
     public Board(Window window){
         super();
@@ -33,15 +36,31 @@ public class Board  extends JPanel implements MouseListener {
 
     /**
      * Copies the state of the board sent in.
-     * @param b
+     * @param b The board to copy.
      */
     public Board(Board b){
         super();
-        board = b.board;
-        inHand = b.inHand;
+        board = new Piece[8][8];
+        if (b.inHand != null){
+            inHand = new Piece(b.inHand);
+        } else {
+            inHand = null;
+        }
         playerTurn = b.playerTurn;
-        pieceToJump = b.pieceToJump;
+        if (b.pieceToJump != null){
+            pieceToJump = new Point(b.pieceToJump.x, b.pieceToJump.y);
+        } else {
+            pieceToJump = null;
+        }
         justJumped = b.justJumped;
+        for (int x = 0; x < 8; x++){
+            for (int y = 0; y <8; y++){
+                if (b.board[x][y] != null){
+                    Piece p = new Piece(b.board[x][y]);
+                    board[x][y] = p;
+                }
+            }
+        }
     }
 
     public void newGame(){
@@ -50,6 +69,7 @@ public class Board  extends JPanel implements MouseListener {
         pieceToJump = null;
         justJumped = false;
         placePieces();
+        ai = new CheckerMinMax();
         System.out.println("Black's turn.");
     }
 
@@ -82,7 +102,7 @@ public class Board  extends JPanel implements MouseListener {
     }
 
     public void play(){
-
+        ai.takeTurn(this);
     }
 
     @Override
@@ -165,6 +185,82 @@ public class Board  extends JPanel implements MouseListener {
      */
     private boolean isEmptySpace(int x, int y){
         return inRange(x) && inRange(y) && board[x][y] == null;
+    }
+
+    // TO BE USED BY AI
+    public Boolean checkValidMove(int x1, int y1, int x2, int y2, int colour){
+        if (inRange(x1) && inRange(x2) && inRange(y1) && inRange(y2)) {
+            if (board[x1][y1] != null){
+                if (Math.abs(x2 - x1) == 1 && colour == y2 - y1 && !jumpAvailable() && board[x2][y2] == null) { //move
+                    //stuff
+                    return true;
+                } else if (Math.abs(x2 - x1) == 2 && colour == (y2 - y1) / 2 && board[x2][y2] == null) { //jump over piece
+                    int midx = (x2 - x1) / 2;
+                    int midy = (y2 - y1) / 2;
+                    if (!isEmptySpace(x2 - midx, y2 - midy) && board[x2 - midx][y2 - midy].getColour() != colour) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public void copyState(Board b){
+        for (int x = 0; x < 8; x++){
+            for (int y = 0; y <8; y++){
+                if (b.board[x][y] != null){
+                    Piece p = new Piece(b.board[x][y]);
+                    board[x][y] = p;
+                }
+            }
+        }
+        inHand = b.inHand;
+        playerTurn = b.playerTurn;
+        pieceToJump = b.pieceToJump;
+        justJumped = b.justJumped;
+        nextPlayerTurn();
+        repaint();
+    }
+
+    // DOESN'T TAKE INTO ACCOUNT DOUBLE JUMPS
+    public ArrayList<Board> allMoves(int colour){
+        ArrayList<Board> boards = new ArrayList<>();
+        for (int x = 0; x < 8; x++){
+            for (int y = 0; y < 8; y++) {
+                Piece p = board[x][y];
+                if (p != null && p.getColour() == colour) {
+                    for (int x2 = -2; x2 < 3; x2++){
+                        if (x2 != 0){
+                            int y2 = Math.abs(x2) * colour;
+                            if (checkValidMove(x,y,x + x2,y + y2, colour)) {
+                                boards.add(movePiece(x, y, x + x2, y + y2));
+                            }
+                            if (p.isKing()){
+                                y2 = y2 * -1;
+                                if (checkValidMove(x,y,x2,y2, colour)) {
+                                    boards.add(movePiece(x, y, x + x2, y + y2));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return boards;
+    }
+
+    private Board movePiece(int x1, int y1, int x2, int y2){
+        Board b = new Board(this);
+        b.board[x2][y2] = b.board[x1][y1];
+        b.board[x1][y1] = null;
+        b.board[x2][y2].setPosition(new Point(x2,y2));
+        if (Math.abs(x2 - x1) == 2){
+            int xdiff = (x2 - x1) / 2;
+            int ydif = (y2 - y1) / 2;
+            b.board[x1 + xdiff][y1 + ydif] = null;
+        }
+        return this;
     }
 
     /**
@@ -319,6 +415,10 @@ public class Board  extends JPanel implements MouseListener {
             System.out.println("There is a jump available.");
         }
         pieceToJump = null;
+
+        if (playerTurn == AIPLAYER){
+            ai.takeTurn(this);
+        }
     }
 
     /**
@@ -351,12 +451,16 @@ public class Board  extends JPanel implements MouseListener {
     public void mousePressed(MouseEvent e) {
         int x = getMouseX(e.getX());
         int y = getMouseY(e.getY());
-        if (!isEmptySpace(x,y) && board[x][y].getColour() == playerTurn) {
+
+
+        // remove "playerTurn != AIPLAYER" to play 2 player
+        if (!isEmptySpace(x,y) && playerTurn != AIPLAYER && board[x][y].getColour() == playerTurn) {
             if (pieceToJump == null){
                 inHand = board[x][y];
             } else if (pieceToJump.x == x && pieceToJump.y == y)
                 inHand = board[x][y];
         }
+
     }
 
     @Override

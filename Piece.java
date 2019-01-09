@@ -8,7 +8,7 @@ public class Piece {
 
     private Point position;
     private int colour;
-    private Boolean king;
+    private boolean king;
 
     public Piece(Point pos, int colour){
         if (pos != null){
@@ -22,6 +22,12 @@ public class Piece {
             throw new IndexOutOfBoundsException("Number entered not -1,1");
         }
         king = false;
+    }
+
+    public Piece(Piece p){
+        position = new Point(p.getPosition().x, p.getPosition().y);
+        this.colour = p.getColour();
+        king = p.isKing();
     }
 
     /**
