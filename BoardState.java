@@ -1,12 +1,18 @@
 import java.awt.*;
 
+// Refactoring Board -> include all data about board in boardstate
+// THis is to make easier for ai to work without fucking everything up
+
+
+
+
 public class BoardState {
 
     public Piece[][] board;
-    private Piece inHand;
-    private int playerTurn;
-    private Point pieceToJump;
-    private boolean justJumped;
+    public Piece inHand;
+    public int playerTurn;
+    public Point pieceToJump;
+    public boolean justJumped;
 
     public BoardState(){
         inHand = null;
@@ -17,13 +23,16 @@ public class BoardState {
     }
 
     public BoardState(BoardState b){
-        if (b.inHand == null){
-            inHand = null;
-        } else {
-            inHand = new Piece(b.inHand);
-        }
+        board = new Piece[8][8];
+        inHand = null;
+
         playerTurn = b.playerTurn;
-        pieceToJump = new Point(b.pieceToJump.x, pieceToJump.y);
+
+        if (b.pieceToJump != null) {
+            pieceToJump = new Point(b.pieceToJump.x, pieceToJump.y);
+        } else {
+            pieceToJump = null;
+        }
         justJumped = b.justJumped;
         for (int x = 0; x < 8; x++){
             for (int y = 0; y <8; y++){

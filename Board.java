@@ -15,12 +15,8 @@ public class Board  extends JPanel implements MouseListener {
     public final static int BLACK = 1;
     public final static int WHITE = -1;
     public final static int AIPLAYER = BLACK;
-    public Piece[][] board;
     private Window window;
-    private Piece inHand;
-    private int playerTurn;
-    private Point pieceToJump;
-    private boolean justJumped;
+    BoardState board;
     private CheckerMinMax  ai = null;
 
     public Board(Window window){
@@ -34,75 +30,14 @@ public class Board  extends JPanel implements MouseListener {
         newGame();
     }
 
-    /**
-     * Copies the state of the board sent in.
-     * @param b The board to copy.
-     */
-    public Board(Board b){
-        super();
-        board = new Piece[8][8];
-        if (b.inHand != null){
-            inHand = new Piece(b.inHand);
-        } else {
-            inHand = null;
-        }
-        playerTurn = b.playerTurn;
-        if (b.pieceToJump != null){
-            pieceToJump = new Point(b.pieceToJump.x, b.pieceToJump.y);
-        } else {
-            pieceToJump = null;
-        }
-        justJumped = b.justJumped;
-        for (int x = 0; x < 8; x++){
-            for (int y = 0; y <8; y++){
-                if (b.board[x][y] != null){
-                    Piece p = new Piece(b.board[x][y]);
-                    board[x][y] = p;
-                }
-            }
-        }
-    }
-
     public void newGame(){
-        inHand = null;
-        playerTurn = BLACK;
-        pieceToJump = null;
-        justJumped = false;
-        placePieces();
-        ai = new CheckerMinMax();
+        board = new BoardState();
+        ai = new CheckerMinMax(this);
         System.out.println("Black's turn.");
     }
 
-    private void placePieces(){
-        board = new Piece[8][8];
-        placeBlacks();
-        placeWhites();
-    }
-
-    private void placeBlacks(){
-        for (int x = 0; x < 8; x++){
-            for (int y = 0; y < 3; y++){
-                if ((x + y) % 2 == 1){
-                    Piece p = new Piece(new Point(x,y), BLACK);
-                    board[x][y] = p;
-                }
-            }
-        }
-    }
-
-    private void placeWhites(){
-        for (int x = 0; x < 8; x++){
-            for (int y = 5; y < 8; y++){
-                if ((x + y) % 2 == 1){
-                    Piece p = new Piece(new Point(x,y), WHITE);
-                    board[x][y] = p;
-                }
-            }
-        }
-    }
-
     public void play(){
-        ai.takeTurn(this);
+        ai.takeTurn(board);
     }
 
     @Override
@@ -129,7 +64,7 @@ public class Board  extends JPanel implements MouseListener {
     private void drawCheckers(Graphics g){
         for (int x = 0; x < 8; x++){
             for (int y = 0; y < 8; y++){
-                Piece p = board[x][y];
+                Piece p = board.board[x][y];
                 if (p != null){
                     if (p.getColour() == BLACK){
                         g.setColor(Color.BLACK);
@@ -184,20 +119,20 @@ public class Board  extends JPanel implements MouseListener {
      * @return true if the space is empty, false otherwise.
      */
     private boolean isEmptySpace(int x, int y){
-        return inRange(x) && inRange(y) && board[x][y] == null;
+        return inRange(x) && inRange(y) && board.board[x][y] == null;
     }
 
     // TO BE USED BY AI
     public Boolean checkValidMove(int x1, int y1, int x2, int y2, int colour){
         if (inRange(x1) && inRange(x2) && inRange(y1) && inRange(y2)) {
-            if (board[x1][y1] != null){
-                if (Math.abs(x2 - x1) == 1 && colour == y2 - y1 && !jumpAvailable() && board[x2][y2] == null) { //move
+            if (board.board[x1][y1] != null){
+                if (Math.abs(x2 - x1) == 1 && colour == y2 - y1 && !jumpAvailable() && board.board[x2][y2] == null) { //move
                     //stuff
                     return true;
-                } else if (Math.abs(x2 - x1) == 2 && colour == (y2 - y1) / 2 && board[x2][y2] == null) { //jump over piece
+                } else if (Math.abs(x2 - x1) == 2 && colour == (y2 - y1) / 2 && board.board[x2][y2] == null) { //jump over piece
                     int midx = (x2 - x1) / 2;
                     int midy = (y2 - y1) / 2;
-                    if (!isEmptySpace(x2 - midx, y2 - midy) && board[x2 - midx][y2 - midy].getColour() != colour) {
+                    if (!isEmptySpace(x2 - midx, y2 - midy) && board.board[x2 - midx][y2 - midy].getColour() != colour) {
                         return true;
                     }
                 }
@@ -206,40 +141,29 @@ public class Board  extends JPanel implements MouseListener {
         return false;
     }
 
-    public void copyState(Board b){
-        for (int x = 0; x < 8; x++){
-            for (int y = 0; y <8; y++){
-                if (b.board[x][y] != null){
-                    Piece p = new Piece(b.board[x][y]);
-                    board[x][y] = p;
-                }
-            }
-        }
-        inHand = b.inHand;
-        playerTurn = b.playerTurn;
-        pieceToJump = b.pieceToJump;
-        justJumped = b.justJumped;
+    public void copyState(BoardState b){
+        board = new BoardState(b);
         nextPlayerTurn();
         repaint();
     }
 
     // DOESN'T TAKE INTO ACCOUNT DOUBLE JUMPS
-    public ArrayList<Board> allMoves(int colour){
-        ArrayList<Board> boards = new ArrayList<>();
+    public ArrayList<BoardState> allMoves(BoardState b, int colour){
+        ArrayList<BoardState> boards = new ArrayList<>();
         for (int x = 0; x < 8; x++){
             for (int y = 0; y < 8; y++) {
-                Piece p = board[x][y];
+                Piece p = b.board[x][y];
                 if (p != null && p.getColour() == colour) {
                     for (int x2 = -2; x2 < 3; x2++){
                         if (x2 != 0){
                             int y2 = Math.abs(x2) * colour;
                             if (checkValidMove(x,y,x + x2,y + y2, colour)) {
-                                boards.add(movePiece(x, y, x + x2, y + y2));
+                                boards.add(movePiece(b, x, y, x + x2, y + y2));
                             }
                             if (p.isKing()){
                                 y2 = y2 * -1;
                                 if (checkValidMove(x,y,x2,y2, colour)) {
-                                    boards.add(movePiece(x, y, x + x2, y + y2));
+                                    boards.add(movePiece(b, x, y, x + x2, y + y2));
                                 }
                             }
                         }
@@ -250,8 +174,8 @@ public class Board  extends JPanel implements MouseListener {
         return boards;
     }
 
-    private Board movePiece(int x1, int y1, int x2, int y2){
-        Board b = new Board(this);
+    private BoardState movePiece(BoardState bS, int x1, int y1, int x2, int y2){
+        BoardState b = new BoardState(bS);
         b.board[x2][y2] = b.board[x1][y1];
         b.board[x1][y1] = null;
         b.board[x2][y2].setPosition(new Point(x2,y2));
@@ -260,7 +184,7 @@ public class Board  extends JPanel implements MouseListener {
             int ydif = (y2 - y1) / 2;
             b.board[x1 + xdiff][y1 + ydif] = null;
         }
-        return this;
+        return b;
     }
 
     /**
@@ -274,7 +198,7 @@ public class Board  extends JPanel implements MouseListener {
      */
     private Boolean checkJump(Piece p, int midx, int midy, int x, int y){
         if (inRange(midy) && inRange(y) && inRange(midx) && inRange(x)){
-            if (board[midx][midy] != null && board[midx][midy].getColour() != p.getColour() && isEmptySpace(x, y)){
+            if (board.board[midx][midy] != null && board.board[midx][midy].getColour() != p.getColour() && isEmptySpace(x, y)){
                 return true;
             }
         }
@@ -293,11 +217,11 @@ public class Board  extends JPanel implements MouseListener {
             Point pos = p.getPosition();
             if (Math.abs(x - pos.x) == 1 && p.correctDirection(y - pos.y)){
                 if (!jumpAvailable()) {
-                    board[pos.x][pos.y] = null;
-                    board[x][y] = p;
+                    board.board[pos.x][pos.y] = null;
+                    board.board[x][y] = p;
                     p.setPosition(new Point(x, y));
                     checkForKing(p);
-                    justJumped = false;
+                    board.justJumped = false;
                     return true;
                 } else {
                     System.out.println("Invalid move, must take the jump.");
@@ -306,13 +230,13 @@ public class Board  extends JPanel implements MouseListener {
                 int midx = (x - pos.x) / 2;
                 int midy = (y - pos.y ) / 2;
 
-                if (!isEmptySpace(x - midx, y - midy) && board[x - midx][y - midy].getColour() != p.getColour()){
-                    board[x - midx][y - midy] = null;
-                    board[pos.x][pos.y] = null;
-                    board[x][y] = p;
+                if (!isEmptySpace(x - midx, y - midy) && board.board[x - midx][y - midy].getColour() != p.getColour()){
+                    board.board[x - midx][y - midy] = null;
+                    board.board[pos.x][pos.y] = null;
+                    board.board[x][y] = p;
                     p.setPosition(new Point(x,y));
                     checkForKing(p);
-                    justJumped = true;
+                    board.justJumped = true;
                     return true;
                 }
             }
@@ -328,8 +252,8 @@ public class Board  extends JPanel implements MouseListener {
         for (int x = 0; x < 8; x++){
             for (int y = 0; y < 8; y++){
                 if (!isEmptySpace(x,y)){
-                    Piece p = board[x][y];
-                    if (p.getColour() == playerTurn){
+                    Piece p = board.board[x][y];
+                    if (p.getColour() == board.playerTurn){
                         if (canPieceJump(p)) return true;
                     }
                 }
@@ -342,8 +266,8 @@ public class Board  extends JPanel implements MouseListener {
         for (int x = 0; x < 8; x++){
             for (int y = 0; y < 8; y++){
                 if (!isEmptySpace(x,y)){
-                    Piece p = board[x][y];
-                    if (p.getColour() == playerTurn){
+                    Piece p = board.board[x][y];
+                    if (p.getColour() == board.playerTurn){
                         if (canPieceMove(p)) return true;
                     }
                 }
@@ -404,20 +328,20 @@ public class Board  extends JPanel implements MouseListener {
      * Sets to the next Players turn.
      */
     private void nextPlayerTurn(){
-        if (playerTurn == BLACK){
-            playerTurn = WHITE;
+        if (board.playerTurn == BLACK){
+            board.playerTurn = WHITE;
             System.out.println("White's turn.");
         } else {
-            playerTurn = BLACK;
+            board.playerTurn = BLACK;
             System.out.println("Black's turn.");
         }
         if (jumpAvailable()) {
             System.out.println("There is a jump available.");
         }
-        pieceToJump = null;
+        board.pieceToJump = null;
 
-        if (playerTurn == AIPLAYER){
-            ai.takeTurn(this);
+        if (board.playerTurn == AIPLAYER){
+            ai.takeTurn(board);
         }
     }
 
@@ -434,7 +358,7 @@ public class Board  extends JPanel implements MouseListener {
     private void checkGameOver(){
         if (!jumpAvailable() && !moveAvailable()){
             String player;
-            if (playerTurn == 1){
+            if (board.playerTurn == 1){
                 player = "White";
             } else {
                 player = "Black";
@@ -454,31 +378,35 @@ public class Board  extends JPanel implements MouseListener {
 
 
         // remove "playerTurn != AIPLAYER" to play 2 player
-        if (!isEmptySpace(x,y) && playerTurn != AIPLAYER && board[x][y].getColour() == playerTurn) {
-            if (pieceToJump == null){
-                inHand = board[x][y];
-            } else if (pieceToJump.x == x && pieceToJump.y == y)
-                inHand = board[x][y];
+        if (!isEmptySpace(x,y) && board.playerTurn != AIPLAYER && board.board[x][y].getColour() == board.playerTurn) {
+            if (board.pieceToJump == null){
+                board.inHand = board.board[x][y];
+            } else if (board.pieceToJump.x == x && board.pieceToJump.y == y)
+                board.inHand = board.board[x][y];
         }
 
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        if (inHand != null) {
+        Boolean aiTurn = false;
+        if (board.inHand != null) {
             int x = getMouseX(e.getX());
             int y = getMouseY(e.getY());
-            if (moveChecker(inHand,x,y)) {
-                if (justJumped && canPieceJump(board[x][y])) {
-                    pieceToJump = board[x][y].getPosition();
+            if (moveChecker(board.inHand,x,y)) {
+                if (board.justJumped && canPieceJump(board.board[x][y])) {
+                    board.pieceToJump = board.board[x][y].getPosition();
                     System.out.println("Jump again.");
                 } else {
-                    nextPlayerTurn();
+                    aiTurn = true;
                 }
             }
-            inHand = null;
+            board.inHand = null;
             repaint();
             checkGameOver();
+            if (aiTurn){
+                nextPlayerTurn();
+            }
         }
     }
 
