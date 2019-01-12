@@ -123,17 +123,21 @@ public class Board  extends JPanel implements MouseListener {
     }
 
     // TO BE USED BY AI
-    public Boolean checkValidMove(int x1, int y1, int x2, int y2, int colour){
+    public Boolean checkValidMove(int x1, int y1, int x2, int y2, int colour, boolean king){
         if (inRange(x1) && inRange(x2) && inRange(y1) && inRange(y2)) {
             if (board.board[x1][y1] != null){
-                if (Math.abs(x2 - x1) == 1 && colour == y2 - y1 && !jumpAvailable() && board.board[x2][y2] == null) { //move
-                    //stuff
-                    return true;
-                } else if (Math.abs(x2 - x1) == 2 && colour == (y2 - y1) / 2 && board.board[x2][y2] == null) { //jump over piece
-                    int midx = (x2 - x1) / 2;
-                    int midy = (y2 - y1) / 2;
-                    if (!isEmptySpace(x2 - midx, y2 - midy) && board.board[x2 - midx][y2 - midy].getColour() != colour) {
+                if (Math.abs(x2 - x1) == 1 && !jumpAvailable() && board.board[x2][y2] == null) { //move
+                    if (colour == y2 - y1 || (king && Math.abs(y2 - y1) == 1)) {
+                        //stuff
                         return true;
+                    }
+                } else if (Math.abs(x2 - x1) == 2 && board.board[x2][y2] == null) { //jump over piece
+                    if (colour == (y2 - y1) / 2 || (king && Math.abs(y2 - y1) == 2)) {
+                        int midx = (x2 - x1) / 2;
+                        int midy = (y2 - y1) / 2;
+                        if (!isEmptySpace(x2 - midx, y2 - midy) && board.board[x2 - midx][y2 - midy].getColour() != colour) {
+                            return true;
+                        }
                     }
                 }
             }
@@ -157,12 +161,12 @@ public class Board  extends JPanel implements MouseListener {
                     for (int x2 = -2; x2 < 3; x2++){
                         if (x2 != 0){
                             int y2 = Math.abs(x2) * colour;
-                            if (checkValidMove(x,y,x + x2,y + y2, colour)) {
+                            if (checkValidMove(x,y,x + x2,y + y2, colour, p.isKing())) {
                                 boards.add(movePiece(b, x, y, x + x2, y + y2));
                             }
                             if (p.isKing()){
                                 y2 = y2 * -1;
-                                if (checkValidMove(x,y,x2,y2, colour)) {
+                                if (checkValidMove(x,y,x + x2,y + y2, colour, p.isKing())) {
                                     boards.add(movePiece(b, x, y, x + x2, y + y2));
                                 }
                             }
@@ -179,6 +183,7 @@ public class Board  extends JPanel implements MouseListener {
         b.board[x2][y2] = b.board[x1][y1];
         b.board[x1][y1] = null;
         b.board[x2][y2].setPosition(new Point(x2,y2));
+        checkForKing( b.board[x2][y2]);
         if (Math.abs(x2 - x1) == 2){
             int xdiff = (x2 - x1) / 2;
             int ydif = (y2 - y1) / 2;
@@ -339,7 +344,7 @@ public class Board  extends JPanel implements MouseListener {
             System.out.println("There is a jump available.");
         }
         board.pieceToJump = null;
-
+        checkGameOver();
         if (board.playerTurn == AIPLAYER){
             ai.takeTurn(board);
         }
@@ -403,7 +408,6 @@ public class Board  extends JPanel implements MouseListener {
             }
             board.inHand = null;
             repaint();
-            checkGameOver();
             if (aiTurn){
                 nextPlayerTurn();
             }

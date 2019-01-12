@@ -15,7 +15,7 @@ public class CheckerMinMax {
         int v = -1000;
         for (BoardState b2 : board.allMoves(bS,Board.AIPLAYER)){
             int temp = Integer.max(v, minValue(b2, 1));
-            if (v < temp){
+            if (v <= temp){
                 v = temp;
                 b1 = b2;
             }
@@ -23,8 +23,7 @@ public class CheckerMinMax {
 
         // Sometimes b1 is never overwritten? Look into,
         //causes null pointer exception \/
-
-
+        //Can't move kings
         board.copyState(b1);
     }
 
@@ -76,6 +75,7 @@ public class CheckerMinMax {
                 }
             }
         } else {
+            System.out.println("b is null");
             total = -1000;
         }
         return total;

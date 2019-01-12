@@ -8,7 +8,7 @@ public class Piece {
 
     private Point position;
     private int colour;
-    private boolean king;
+    public boolean king;
 
     public Piece(Point pos, int colour){
         if (pos != null){
