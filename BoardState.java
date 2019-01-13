@@ -48,6 +48,12 @@ public class BoardState {
         board = new Piece[8][8];
         placeBlacks();
         placeWhites();
+        /*Piece p = new Piece(new Point(4,5), Board.BLACK);
+        p.king = true;
+        board[4][5] = p;
+        p = new Piece(new Point(7, 4), Board.WHITE);
+        p.king = true;
+        board[7][4] = p;*/
     }
 
     private void placeBlacks(){

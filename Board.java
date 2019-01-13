@@ -164,8 +164,6 @@ public class Board  extends JPanel implements MouseListener {
     }
     */
 
-
-    // DOESN'T TAKE INTO ACCOUNT DOUBLE JUMPS
     public ArrayList<BoardState> allMoves(BoardState b, int colour){
         ArrayList<BoardState> boards = new ArrayList<>();
         for (int x = 0; x < 8; x++){
@@ -184,7 +182,6 @@ public class Board  extends JPanel implements MouseListener {
                 if (x2 != 0) {
                     int y2 = Math.abs(x2) * colour;
                     if (Math.abs(x2) == 2){
-
                         if (checkValidMove(b,x,y,x + x2,y + y2, colour, p.isKing())) {
                             boards.addAll(allJumps(b, x, y, x2, y2, colour));
                         }
@@ -194,16 +191,18 @@ public class Board  extends JPanel implements MouseListener {
                                 boards.addAll(allJumps(b, x, y,  x2, y2, colour));
                             }
                         }
-
-
                     } else if (!mustJump){
                         if (checkValidMove(b,x,y,x + x2,y + y2, colour, p.isKing())) {
-                            boards.add(movePiece(b, x, y, x + x2, y + y2));
+                            BoardState bS = movePiece(b, x, y, x + x2, y + y2);
+                            checkForKing(bS.board[x+x2][y+y2]);
+                            boards.add(bS);
                         }
                         if (p.isKing()){
                             y2 = y2 * -1;
                             if (checkValidMove(b, x,y,x + x2,y + y2, colour, p.isKing())) {
-                                boards.add(movePiece(b, x, y, x + x2, y + y2));
+                                BoardState bS = movePiece(b, x, y, x + x2, y + y2);
+                                checkForKing(bS.board[x+x2][y+y2]);
+                                boards.add(bS);
                             }
                         }
                     }
@@ -220,6 +219,7 @@ public class Board  extends JPanel implements MouseListener {
         if (canPieceJump(bS, bS.board[x+x2][y+y2])){
             jumps.addAll(getMoves(bS, colour, x + x2, y + y2, true));
         } else {
+            checkForKing(bS.board[x+x2][y+y2]);
             jumps.add(bS);
         }
         return jumps;
@@ -230,7 +230,6 @@ public class Board  extends JPanel implements MouseListener {
         b.board[x2][y2] = b.board[x1][y1];
         b.board[x1][y1] = null;
         b.board[x2][y2].setPosition(new Point(x2,y2));
-        checkForKing( b.board[x2][y2]);
         if (Math.abs(x2 - x1) == 2){
             int xdiff = (x2 - x1) / 2;
             int ydif = (y2 - y1) / 2;
@@ -272,7 +271,6 @@ public class Board  extends JPanel implements MouseListener {
                     b.board[pos.x][pos.y] = null;
                     b.board[x][y] = p;
                     p.setPosition(new Point(x, y));
-                    checkForKing(p);
                     b.justJumped = false;
                     return true;
                 } else {
@@ -287,7 +285,6 @@ public class Board  extends JPanel implements MouseListener {
                     b.board[pos.x][pos.y] = null;
                     b.board[x][y] = p;
                     p.setPosition(new Point(x,y));
-                    checkForKing(p);
                     b.justJumped = true;
                     return true;
                 }
@@ -445,6 +442,7 @@ public class Board  extends JPanel implements MouseListener {
 
     @Override
     public void mouseReleased(MouseEvent e) {
+        Piece p = null;
         Boolean aiTurn = false;
         if (board.inHand != null) {
             int x = getMouseX(e.getX());
@@ -454,7 +452,11 @@ public class Board  extends JPanel implements MouseListener {
                     board.pieceToJump = board.board[x][y].getPosition();
                     System.out.println("Jump again.");
                 } else {
+                    p = board.inHand;
                     aiTurn = true;
+                }
+                if (p != null){
+                    checkForKing(p);
                 }
             }
             board.inHand = null;

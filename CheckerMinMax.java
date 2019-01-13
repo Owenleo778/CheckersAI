@@ -11,7 +11,7 @@ import java.util.Collections;
  */
 public class CheckerMinMax {
 
-    private final static int maxDepth = 8;
+    private final static int maxDepth = 6;
     private Board board;
 
     public CheckerMinMax(Board b){
@@ -30,8 +30,8 @@ public class CheckerMinMax {
                 b1 = b2;
             }
         }*/
-        int a = - 1002;
-        int be = 1002;
+        int a = - 3002;
+        int be = 3002;
         for (BoardState b2 : moves){
             int temp = Integer.max(a, minValue2(b2, a, be, 1));
             if (a < temp){
@@ -48,7 +48,7 @@ public class CheckerMinMax {
 
     private int maxValue(BoardState bS, int depth){
         if (depth >= maxDepth){
-            return evaluation(bS);
+            return evaluation(bS, depth);
         }
         Integer v = -1000;
         ArrayList<BoardState> moves = board.allMoves(bS,Board.AIPLAYER);
@@ -60,35 +60,41 @@ public class CheckerMinMax {
 
     private int maxValue2(BoardState bS, int a, int be, int depth){
         if (depth >= maxDepth){
-            return evaluation(bS);
+            return evaluation(bS, depth);
         }
         ArrayList<BoardState> moves = board.allMoves(bS,Board.AIPLAYER);
         for (BoardState b : moves){
             a = Integer.max(a, minValue2(b, a, be, depth + 1));
-            if (a >= be){
+            if (a > be){
                 return a;
             }
+        }
+        if (moves.size() == 0){
+            return evaluation(bS, depth);
         }
         return a;
     }
 
     private int minValue2(BoardState bS, int a, int be, int depth){
         if (depth >= maxDepth){
-            return evaluation(bS);
+            return evaluation(bS, depth);
         }
         ArrayList<BoardState> moves = board.allMoves(bS,Board.AIPLAYER * -1);
         for (BoardState b : moves){
             be = Integer.min(be, maxValue2(b, a, be, depth + 1));
-            if (be <= a){
+            if (be < a){
                 return be;
             }
+        }
+        if (moves.size() == 0){
+            return evaluation(bS, depth);
         }
         return be;
     }
 
     private int minValue(BoardState bS, int depth){
         if (depth >= maxDepth){
-            return evaluation(bS);
+            return evaluation(bS, depth);
         }
         Integer v = 1000;
         ArrayList<BoardState> moves = board.allMoves(bS,Board.AIPLAYER * -1);
@@ -99,7 +105,7 @@ public class CheckerMinMax {
         return v;
     }
 
-    private int evaluation(BoardState b) {
+    private int evaluation(BoardState b, int depth) {
         int goalTotal = 0;
         int avoidTotal = 0;
         if (b != null) {
@@ -109,17 +115,15 @@ public class CheckerMinMax {
                     if (p != null) {
                         if (p.isKing()) {
                             if (p.getColour() == Board.AIPLAYER) {
-                                goalTotal++;
-                                goalTotal++;
+                                goalTotal = goalTotal + 3;
                             } else {
-                                avoidTotal--;
-                                avoidTotal--;
+                                avoidTotal = avoidTotal - 3;
                             }
                         } else {
                             if (p.getColour() == Board.AIPLAYER) {
-                                goalTotal++;
+                                goalTotal = goalTotal + 2;
                             } else {
-                                avoidTotal--;
+                                avoidTotal = avoidTotal - 2;
                             }
                         }
                         if (x == 0 || x == 7 || y == 0 || y == 7){
@@ -134,13 +138,13 @@ public class CheckerMinMax {
             }
         } else {
             System.out.println("b is null");
-            return -1000;
+            return -2000;
         }
         if (avoidTotal == 0){
-            return 1002;
+            return 1000 - depth;
         }
         if (goalTotal == 0){
-            return -1002;
+            return -1000 + depth;
         }
         return avoidTotal + goalTotal;
     }
