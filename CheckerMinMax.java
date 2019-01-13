@@ -11,7 +11,7 @@ import java.util.Collections;
  */
 public class CheckerMinMax {
 
-    private final static int maxDepth = 6;
+    private final static int maxDepth = 8;
     private Board board;
 
     public CheckerMinMax(Board b){
@@ -20,17 +20,26 @@ public class CheckerMinMax {
 
     public void takeTurn(BoardState bS){
         BoardState b1 = null;
-        int v = -1001;
+        //int v = -1001;
         ArrayList<BoardState> moves = board.allMoves(bS,Board.AIPLAYER);
         Collections.shuffle(moves);
-        for (BoardState b2 : moves){
+        /*for (BoardState b2 : moves){
             int temp = Integer.max(v, minValue(b2, 1));
             if (v < temp){
                 v = temp;
                 b1 = b2;
             }
+        }*/
+        int a = - 1002;
+        int be = 1002;
+        for (BoardState b2 : moves){
+            int temp = Integer.max(a, minValue2(b2, a, be, 1));
+            if (a < temp){
+                a = temp;
+                b1 = b2;
+            }
         }
-        System.out.println(v);
+        System.out.println(a);
         // Sometimes b1 is never overwritten? Look into,
         //causes null pointer exception \/
         //Can't move kings
@@ -47,6 +56,34 @@ public class CheckerMinMax {
             v = Integer.max(v, minValue(b, depth + 1));
         }
         return v;
+    }
+
+    private int maxValue2(BoardState bS, int a, int be, int depth){
+        if (depth >= maxDepth){
+            return evaluation(bS);
+        }
+        ArrayList<BoardState> moves = board.allMoves(bS,Board.AIPLAYER);
+        for (BoardState b : moves){
+            a = Integer.max(a, minValue2(b, a, be, depth + 1));
+            if (a >= be){
+                return a;
+            }
+        }
+        return a;
+    }
+
+    private int minValue2(BoardState bS, int a, int be, int depth){
+        if (depth >= maxDepth){
+            return evaluation(bS);
+        }
+        ArrayList<BoardState> moves = board.allMoves(bS,Board.AIPLAYER * -1);
+        for (BoardState b : moves){
+            be = Integer.min(be, maxValue2(b, a, be, depth + 1));
+            if (be <= a){
+                return be;
+            }
+        }
+        return be;
     }
 
     private int minValue(BoardState bS, int depth){
@@ -79,6 +116,13 @@ public class CheckerMinMax {
                                 avoidTotal--;
                             }
                         } else {
+                            if (p.getColour() == Board.AIPLAYER) {
+                                goalTotal++;
+                            } else {
+                                avoidTotal--;
+                            }
+                        }
+                        if (x == 0 || x == 7 || y == 0 || y == 7){
                             if (p.getColour() == Board.AIPLAYER) {
                                 goalTotal++;
                             } else {
