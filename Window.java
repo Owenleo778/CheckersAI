@@ -1,5 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 
 /**
  * Holds everything from the game within this class.
@@ -31,12 +32,15 @@ public class Window {
 
         board = new Board(this);
         panel.add(board, BorderLayout.CENTER);
+        JButton startB = new JButton("Start");
+        startB.addActionListener(e -> {board.play(); startB.setEnabled(false);});
+        panel.add(startB, BorderLayout.NORTH);
 
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
         frame.setResizable(false);
-        board.play();
+        //board.play();
     }
 
 }

@@ -9,13 +9,18 @@ import java.util.Collections;
 /**
  * An AI using min-max and alpha beta-pruning to play checkers. Always takes the role of black
  */
-public class CheckerMinMax {
+public class CheckerMinMax implements Runnable{
 
     private final static int maxDepth = 6;
     private Board board;
 
     public CheckerMinMax(Board b){
         board = b;
+    }
+
+    @Override
+    public void run() {
+        takeTurn(board.getBoardState());
     }
 
     public void takeTurn(BoardState bS){
@@ -39,7 +44,7 @@ public class CheckerMinMax {
                 b1 = b2;
             }
         }
-        System.out.println(a);
+        //System.out.println(a);
         // Sometimes b1 is never overwritten? Look into,
         //causes null pointer exception \/
         //Can't move kings
@@ -148,5 +153,4 @@ public class CheckerMinMax {
         }
         return avoidTotal + goalTotal;
     }
-
 }

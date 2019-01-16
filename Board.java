@@ -16,8 +16,7 @@ public class Board  extends JPanel implements MouseListener {
     public final static int WHITE = -1;
     public final static int AIPLAYER = BLACK;
     private Window window;
-    BoardState board;
-    private CheckerMinMax  ai = null;
+    private BoardState board;
 
     public Board(Window window){
         super();
@@ -32,13 +31,14 @@ public class Board  extends JPanel implements MouseListener {
 
     public void newGame(){
         board = new BoardState();
-        ai = new CheckerMinMax(this);
         System.out.println("Black's turn.");
     }
 
     public void play(){
-        ai.takeTurn(board);
-    }
+        if (AIPLAYER == BLACK){
+            new Thread(new CheckerMinMax(this)).start();
+        }
+}
 
     @Override
     public void paintComponent(Graphics g) {
@@ -151,18 +151,9 @@ public class Board  extends JPanel implements MouseListener {
         repaint();
     }
 
-    /*
-    if (Math.abs(y2) == 2){
-        x = x + x2;
-        y = y + y2;
-        if (checkValidMove(x,y,x + x2,y + y2, colour, p.isKing())) {
-
-        }
-        if (checkValidMove(x,y,x - x2,y + y2, colour, p.isKing())) {
-
-        }
+    public BoardState getBoardState() {
+        return board;
     }
-    */
 
     public ArrayList<BoardState> allMoves(BoardState b, int colour){
         ArrayList<BoardState> boards = new ArrayList<>();
@@ -311,6 +302,11 @@ public class Board  extends JPanel implements MouseListener {
         return false;
     }
 
+    /**
+     * Checks if the player can make a move
+     * @param b the board state.
+     * @return true if it can move, false otherwise.
+     */
     private Boolean moveAvailable(BoardState b){
         for (int x = 0; x < 8; x++){
             for (int y = 0; y < 8; y++){
@@ -335,47 +331,34 @@ public class Board  extends JPanel implements MouseListener {
      * @return true if a jump exists, false otherwise.
      */
     private Boolean canPieceJump(BoardState b, Piece p){
-       if (p.isKing()){
-           return checkBlackJump(b, p) || checkWhiteJump(b, p);
-       } else if (p.getColour() == BLACK){
-           if (checkBlackJump(b, p)) return true;
-       } else {
-           if (checkWhiteJump(b, p)) return true;
-       }
-        return false;
+       return checkJump(b, p, p.isKing());
     }
 
     private Boolean canPieceMove(BoardState b, Piece p){
-        if (p.isKing()){
-            return checkBlackMove(b, p) || checkWhiteMove(b, p);
-        } else if (p.getColour() == BLACK){
-            if (checkBlackMove(b, p)) return true;
-        } else {
-            if (checkWhiteMove(b, p)) return true;
+        return checkMove(b, p, p.isKing());
+    }
+
+    private Boolean checkJump(BoardState b, Piece p, boolean king){
+        Point pos = p.getPosition();
+        if (king){
+            return checkJump(b, p,pos.x - 1,pos.y + p.getColour(), pos.x - 2, pos.y + 2 *  p.getColour()) ||
+                    checkJump(b, p,pos.x + 1,pos.y +  p.getColour(), pos.x + 2, pos.y + 2 *  p.getColour()) ||
+                    checkJump(b, p,pos.x - 1,pos.y + -1 * p.getColour(), pos.x - 2, pos.y + 2 *  -1 * p.getColour()) ||
+                    checkJump(b, p,pos.x + 1,pos.y + -1 * p.getColour(), pos.x + 2, pos.y + 2 * -1 * p.getColour());
         }
-        return false;
+        return checkJump(b, p,pos.x - 1,pos.y + p.getColour(), pos.x - 2, pos.y + 2 *  p.getColour()) ||
+                checkJump(b, p,pos.x + 1,pos.y +  p.getColour(), pos.x + 2, pos.y + 2 *  p.getColour());
     }
 
-    private Boolean checkBlackJump(BoardState b, Piece p){
+    private Boolean checkMove(BoardState b, Piece p, boolean king){
         Point pos = p.getPosition();
-        return checkJump(b, p,pos.x - 1,pos.y + BLACK, pos.x - 2, pos.y + 2 * BLACK) ||
-                checkJump(b, p,pos.x + 1,pos.y + BLACK, pos.x + 2, pos.y + 2 * BLACK);
+        if (king){
+            return isEmptySpace(b, pos.x - 1, pos.y +  p.getColour()) || isEmptySpace(b, pos.x + 1, pos.y +  p.getColour()) ||
+                    isEmptySpace(b, pos.x - 1, pos.y + -1 * p.getColour()) || isEmptySpace(b, pos.x + 1, pos.y +  -1 * p.getColour());
+        }
+        return isEmptySpace(b, pos.x - 1, pos.y +  p.getColour()) || isEmptySpace(b, pos.x + 1, pos.y +  p.getColour());
     }
 
-    private Boolean checkBlackMove(BoardState b, Piece p){
-        Point pos = p.getPosition();
-        return isEmptySpace(b, pos.x - 1, pos.y + BLACK) || isEmptySpace(b, pos.x + 1, pos.y + BLACK);
-    }
-
-    private Boolean checkWhiteJump(BoardState b, Piece p){
-        Point pos = p.getPosition();
-        return checkJump(b, p,pos.x - 1,pos.y + WHITE, pos.x - 2, pos.y + 2 * WHITE) ||
-                checkJump(b, p,pos.x + 1,pos.y + WHITE, pos.x + 2, pos.y + 2 * WHITE);
-    }
-    private Boolean checkWhiteMove(BoardState b, Piece p){
-        Point pos = p.getPosition();
-        return isEmptySpace(b, pos.x - 1, pos.y + WHITE) || isEmptySpace(b, pos.x + 1, pos.y + WHITE);
-    }
 
     /**
      * Sets to the next Players turn.
@@ -394,7 +377,7 @@ public class Board  extends JPanel implements MouseListener {
         board.pieceToJump = null;
         checkGameOver();
         if (board.playerTurn == AIPLAYER){
-            ai.takeTurn(board);
+            new Thread(new CheckerMinMax(this)).start();
         }
     }
 
@@ -417,7 +400,6 @@ public class Board  extends JPanel implements MouseListener {
                 player = "Black";
             }
             System.out.println(player + " wins!");
-            System.exit(0);
         }
     }
 
@@ -461,6 +443,7 @@ public class Board  extends JPanel implements MouseListener {
             }
             board.inHand = null;
             repaint();
+
             if (aiTurn){
                 nextPlayerTurn();
             }

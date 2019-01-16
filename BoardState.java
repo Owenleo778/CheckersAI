@@ -1,11 +1,5 @@
 import java.awt.*;
 
-// Refactoring Board -> include all data about board in boardstate
-// THis is to make easier for ai to work without fucking everything up
-
-
-
-
 public class BoardState {
 
     public Piece[][] board;
