@@ -7,12 +7,14 @@ public class BoardState {
     public int playerTurn;
     public Point pieceToJump;
     public boolean justJumped;
+    public int drawCounter;
 
     public BoardState(){
         inHand = null;
-        playerTurn = Board.BLACK;
+        playerTurn = Board.STARTPLAYER;
         pieceToJump = null;
         justJumped = false;
+        drawCounter = 0;
         placePieces();
     }
 
@@ -21,6 +23,7 @@ public class BoardState {
         inHand = null;
 
         playerTurn = b.playerTurn;
+        drawCounter = b.drawCounter;
 
         if (b.pieceToJump != null) {
             pieceToJump = new Point(b.pieceToJump.x, pieceToJump.y);

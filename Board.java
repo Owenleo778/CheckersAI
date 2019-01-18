@@ -15,6 +15,7 @@ public class Board  extends JPanel implements MouseListener {
     public final static int BLACK = 1;
     public final static int WHITE = -1;
     public final static int AIPLAYER = BLACK;
+    public final static int STARTPLAYER = BLACK;
     private Window window;
     private BoardState board;
 
@@ -31,12 +32,16 @@ public class Board  extends JPanel implements MouseListener {
 
     public void newGame(){
         board = new BoardState();
-        System.out.println("Black's turn.");
+        if (STARTPLAYER == BLACK){
+            System.out.println("Black's turn.");
+        } else {
+            System.out.println("White's turn.");
+        }
     }
 
     public void play(){
-        if (AIPLAYER == BLACK){
-            new Thread(new CheckerMinMax(this)).start();
+        if (AIPLAYER == STARTPLAYER){
+            new Thread(new CheckerMinMax(this, STARTPLAYER)).start();
         }
 }
 
@@ -221,10 +226,12 @@ public class Board  extends JPanel implements MouseListener {
         b.board[x2][y2] = b.board[x1][y1];
         b.board[x1][y1] = null;
         b.board[x2][y2].setPosition(new Point(x2,y2));
+        b.drawCounter++;
         if (Math.abs(x2 - x1) == 2){
             int xdiff = (x2 - x1) / 2;
             int ydif = (y2 - y1) / 2;
             b.board[x1 + xdiff][y1 + ydif] = null;
+            b.drawCounter = 0;
         }
         return b;
     }
@@ -263,6 +270,7 @@ public class Board  extends JPanel implements MouseListener {
                     b.board[x][y] = p;
                     p.setPosition(new Point(x, y));
                     b.justJumped = false;
+                    b.drawCounter++;
                     return true;
                 } else {
                     System.out.println("Invalid move, must take the jump.");
@@ -277,6 +285,7 @@ public class Board  extends JPanel implements MouseListener {
                     b.board[x][y] = p;
                     p.setPosition(new Point(x,y));
                     b.justJumped = true;
+                    b.drawCounter = 0;
                     return true;
                 }
             }
@@ -376,9 +385,13 @@ public class Board  extends JPanel implements MouseListener {
         }
         board.pieceToJump = null;
         checkGameOver();
+
         if (board.playerTurn == AIPLAYER){
             new Thread(new CheckerMinMax(this)).start();
+        } else if (board.playerTurn != 0){
+            new Thread(new CheckerMinMax(this, board.playerTurn)).start();
         }
+
     }
 
     /**
@@ -388,6 +401,9 @@ public class Board  extends JPanel implements MouseListener {
     private void checkForKing(Piece p){
         if (!p.isKing()){
             p.checkKingPosition();
+            if (p.isKing()){
+                board.drawCounter = 0;
+            }
         }
     }
 
@@ -399,7 +415,11 @@ public class Board  extends JPanel implements MouseListener {
             } else {
                 player = "Black";
             }
+            board.playerTurn = 0;
             System.out.println(player + " wins!");
+        } else if (board.drawCounter == 50){
+            board.playerTurn = 0;
+            System.out.println("50 turns of nothing happening, game ends in draw.");
         }
     }
 

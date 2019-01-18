@@ -13,9 +13,16 @@ public class CheckerMinMax implements Runnable{
 
     private final static int maxDepth = 6;
     private Board board;
+    private int colour;
 
     public CheckerMinMax(Board b){
         board = b;
+        colour = Board.AIPLAYER;
+    }
+
+    public CheckerMinMax(Board b, int colour){
+        this(b);
+        this.colour = colour;
     }
 
     @Override
@@ -26,7 +33,7 @@ public class CheckerMinMax implements Runnable{
     public void takeTurn(BoardState bS){
         BoardState b1 = null;
         //int v = -1001;
-        ArrayList<BoardState> moves = board.allMoves(bS,Board.AIPLAYER);
+        ArrayList<BoardState> moves = board.allMoves(bS,colour);
         Collections.shuffle(moves);
         /*for (BoardState b2 : moves){
             int temp = Integer.max(v, minValue(b2, 1));
@@ -44,7 +51,7 @@ public class CheckerMinMax implements Runnable{
                 b1 = b2;
             }
         }
-        //System.out.println(a);
+        System.out.println(a);
         // Sometimes b1 is never overwritten? Look into,
         //causes null pointer exception \/
         //Can't move kings
@@ -56,7 +63,7 @@ public class CheckerMinMax implements Runnable{
             return evaluation(bS, depth);
         }
         Integer v = -1000;
-        ArrayList<BoardState> moves = board.allMoves(bS,Board.AIPLAYER);
+        ArrayList<BoardState> moves = board.allMoves(bS,colour);
         for (BoardState b : moves){
             v = Integer.max(v, minValue(b, depth + 1));
         }
@@ -67,7 +74,7 @@ public class CheckerMinMax implements Runnable{
         if (depth >= maxDepth){
             return evaluation(bS, depth);
         }
-        ArrayList<BoardState> moves = board.allMoves(bS,Board.AIPLAYER);
+        ArrayList<BoardState> moves = board.allMoves(bS,colour);
         for (BoardState b : moves){
             a = Integer.max(a, minValue2(b, a, be, depth + 1));
             if (a > be){
@@ -84,7 +91,7 @@ public class CheckerMinMax implements Runnable{
         if (depth >= maxDepth){
             return evaluation(bS, depth);
         }
-        ArrayList<BoardState> moves = board.allMoves(bS,Board.AIPLAYER * -1);
+        ArrayList<BoardState> moves = board.allMoves(bS,colour * -1);
         for (BoardState b : moves){
             be = Integer.min(be, maxValue2(b, a, be, depth + 1));
             if (be < a){
@@ -102,7 +109,7 @@ public class CheckerMinMax implements Runnable{
             return evaluation(bS, depth);
         }
         Integer v = 1000;
-        ArrayList<BoardState> moves = board.allMoves(bS,Board.AIPLAYER * -1);
+        ArrayList<BoardState> moves = board.allMoves(bS,colour * -1);
         for (BoardState b : moves){
             v = Integer.min(v, maxValue(b, depth + 1));
 
@@ -119,25 +126,25 @@ public class CheckerMinMax implements Runnable{
                     Piece p = b.board[x][y];
                     if (p != null) {
                         if (p.isKing()) {
-                            if (p.getColour() == Board.AIPLAYER) {
+                            if (p.getColour() == colour) {
                                 goalTotal = goalTotal + 3;
                             } else {
                                 avoidTotal = avoidTotal - 3;
                             }
                         } else {
-                            if (p.getColour() == Board.AIPLAYER) {
+                            if (p.getColour() == colour) {
                                 goalTotal = goalTotal + 2;
                             } else {
                                 avoidTotal = avoidTotal - 2;
                             }
                         }
-                        if (x == 0 || x == 7 || y == 0 || y == 7){
-                            if (p.getColour() == Board.AIPLAYER) {
+
+                        if (x == 0 || x == 7 || y == 0 || y == 7) {
+                            if (p.getColour() == colour) {
                                 goalTotal++;
-                            } else {
-                                avoidTotal--;
                             }
                         }
+
                     }
                 }
             }
