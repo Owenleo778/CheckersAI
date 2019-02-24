@@ -1,27 +1,24 @@
-
-
-// Doesn't seem to take any notice of best move, tends to move right most piece only (unless has to make jump)
-
-
 import java.util.ArrayList;
 import java.util.Collections;
 
 /**
  * An AI using min-max and alpha beta-pruning to play checkers. Always takes the role of black
+ * @author Owen Salvage
  */
 public class CheckerMinMax implements Runnable{
 
-    private final static int maxDepth = 6;
+    private int maxDepth;
     private Board board;
     private int colour;
 
-    public CheckerMinMax(Board b){
+    public CheckerMinMax(Board b, int depth){
         board = b;
-        colour = Board.AIPLAYER;
+        colour = b.aiPlayer;
+        maxDepth = depth;
     }
 
-    public CheckerMinMax(Board b, int colour){
-        this(b);
+    public CheckerMinMax(Board b, int colour, int depth){
+        this(b, depth);
         this.colour = colour;
     }
 
@@ -51,10 +48,6 @@ public class CheckerMinMax implements Runnable{
                 b1 = b2;
             }
         }
-        System.out.println(a);
-        // Sometimes b1 is never overwritten? Look into,
-        //causes null pointer exception \/
-        //Can't move kings
         board.copyState(b1);
     }
 
@@ -127,9 +120,9 @@ public class CheckerMinMax implements Runnable{
                     if (p != null) {
                         if (p.isKing()) {
                             if (p.getColour() == colour) {
-                                goalTotal = goalTotal + 3;
+                                goalTotal = goalTotal + 5;
                             } else {
-                                avoidTotal = avoidTotal - 3;
+                                avoidTotal = avoidTotal - 5;
                             }
                         } else {
                             if (p.getColour() == colour) {
@@ -141,7 +134,8 @@ public class CheckerMinMax implements Runnable{
 
                         if (x == 0 || x == 7 || y == 0 || y == 7) {
                             if (p.getColour() == colour) {
-                                goalTotal++;
+                                if (!p.isKing())
+                                    goalTotal++;
                             }
                         }
 

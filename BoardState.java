@@ -1,5 +1,9 @@
 import java.awt.*;
 
+/**
+ * A class that stores the current state of the board.
+ * @author Owen Salvage
+ */
 public class BoardState {
 
     public Piece[][] board;
@@ -9,15 +13,19 @@ public class BoardState {
     public boolean justJumped;
     public int drawCounter;
 
-    public BoardState(){
+    public BoardState(int startPlayer) {
         inHand = null;
-        playerTurn = Board.STARTPLAYER;
+        playerTurn = startPlayer;
         pieceToJump = null;
         justJumped = false;
         drawCounter = 0;
         placePieces();
     }
 
+    /**
+     * Sets the parameters to the same as the one passed in
+     * @param b
+     */
     public BoardState(BoardState b){
         board = new Piece[8][8];
         inHand = null;
@@ -45,12 +53,6 @@ public class BoardState {
         board = new Piece[8][8];
         placeBlacks();
         placeWhites();
-        /*Piece p = new Piece(new Point(4,5), Board.BLACK);
-        p.king = true;
-        board[4][5] = p;
-        p = new Piece(new Point(7, 4), Board.WHITE);
-        p.king = true;
-        board[7][4] = p;*/
     }
 
     private void placeBlacks(){
@@ -74,6 +76,4 @@ public class BoardState {
             }
         }
     }
-
-
 }

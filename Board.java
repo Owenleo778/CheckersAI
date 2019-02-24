@@ -14,25 +14,47 @@ public class Board  extends JPanel implements MouseListener {
     // Top LEFT CORNER = 0,0
     public final static int BLACK = 1;
     public final static int WHITE = -1;
-    public final static int AIPLAYER = BLACK;
-    public final static int STARTPLAYER = BLACK;
-    private Window window;
+    public final static int NOT_PLAYING = 0;
+    public int aiPlayer;
+    public int startPlayer;
     private BoardState board;
+    private int aiDepth;
+    private boolean singlePlayer;
 
-    public Board(Window window){
+    private Board(){
         super();
-        this.window = window;
         setBackground(Color.GRAY);
         setBorder(new LineBorder(Color.DARK_GRAY, 5));
         addMouseListener(this);
         setMinimumSize(new Dimension(8800,800));
         setPreferredSize(new Dimension(800,800));
-        newGame();
+        singlePlayer = false;
+        aiPlayer = NOT_PLAYING;
+    }
+
+    public Board(Boolean whiteStart){
+        this();
+        if (whiteStart){
+            startPlayer = WHITE;
+        } else {
+            startPlayer = BLACK;
+        }
+    }
+
+    public Board(Boolean whiteStart, Boolean playerWhite, int aiDepth){
+        this(whiteStart);
+        if (playerWhite){
+            aiPlayer = BLACK;
+        } else {
+            aiPlayer = WHITE;
+        }
+        this.aiDepth = aiDepth;
+        singlePlayer = true;
     }
 
     public void newGame(){
-        board = new BoardState();
-        if (STARTPLAYER == BLACK){
+        board = new BoardState(startPlayer);
+        if (startPlayer == BLACK){
             System.out.println("Black's turn.");
         } else {
             System.out.println("White's turn.");
@@ -40,8 +62,9 @@ public class Board  extends JPanel implements MouseListener {
     }
 
     public void play(){
-        if (AIPLAYER == STARTPLAYER){
-            new Thread(new CheckerMinMax(this, STARTPLAYER)).start();
+        newGame();
+        if (aiPlayer == startPlayer){
+            new Thread(new CheckerMinMax(this, startPlayer)).start();
         }
 }
 
@@ -386,12 +409,13 @@ public class Board  extends JPanel implements MouseListener {
         board.pieceToJump = null;
         checkGameOver();
 
-        if (board.playerTurn == AIPLAYER){
-            new Thread(new CheckerMinMax(this)).start();
-        } else if (board.playerTurn != 0){
-            new Thread(new CheckerMinMax(this, board.playerTurn)).start();
+        if (singlePlayer) {
+            if (board.playerTurn == aiPlayer) {
+                new Thread(new CheckerMinMax(this, aiDepth)).start();
+            } /*else if (board.playerTurn != 0) {
+                new Thread(new CheckerMinMax(this, board.playerTurn)).start();
+            }*/
         }
-
     }
 
     /**
@@ -433,7 +457,7 @@ public class Board  extends JPanel implements MouseListener {
 
 
         // remove "playerTurn != AIPLAYER" to play 2 player
-        if (!isEmptySpace(board, x,y) && board.playerTurn != AIPLAYER && board.board[x][y].getColour() == board.playerTurn) {
+        if (!isEmptySpace(board, x,y) && board.board[x][y].getColour() == board.playerTurn) {
             if (board.pieceToJump == null){
                 board.inHand = board.board[x][y];
             } else if (board.pieceToJump.x == x && board.pieceToJump.y == y)
@@ -445,7 +469,7 @@ public class Board  extends JPanel implements MouseListener {
     @Override
     public void mouseReleased(MouseEvent e) {
         Piece p = null;
-        Boolean aiTurn = false;
+        Boolean moveMade = false;
         if (board.inHand != null) {
             int x = getMouseX(e.getX());
             int y = getMouseY(e.getY());
@@ -455,7 +479,7 @@ public class Board  extends JPanel implements MouseListener {
                     System.out.println("Jump again.");
                 } else {
                     p = board.inHand;
-                    aiTurn = true;
+                    moveMade = true;
                 }
                 if (p != null){
                     checkForKing(p);
@@ -464,7 +488,7 @@ public class Board  extends JPanel implements MouseListener {
             board.inHand = null;
             repaint();
 
-            if (aiTurn){
+            if (moveMade){
                 nextPlayerTurn();
             }
         }
